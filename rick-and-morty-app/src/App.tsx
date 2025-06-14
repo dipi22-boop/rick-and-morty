@@ -1,10 +1,12 @@
+import MainLayout from './layouts/MainLayout';
+import Home from './pages/Home';
 
 function App() {
   return (
-    <>
-      <h1>Vite + React</h1>
-    </>
-  )
+    <MainLayout>
+      <Home />
+    </MainLayout>
+  );
 }
 
-export default App
+export default App;
