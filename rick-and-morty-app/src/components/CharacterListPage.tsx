@@ -52,8 +52,36 @@ interface ApiListResponse {
 // --- TanStack Table Column Helper ---
 const columnHelper = createColumnHelper<Character>();
 
-// --- Column Definitions for the list view ---
+
+
+// --- Data Fetching Functions ---
+const fetchCharacters = async (page: number): Promise<ApiListResponse> => {
+  const response = await fetch(`https://rickandmortyapi.com/api/character/?page=${page}`);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+};
+
+// --- Helper to get page from URL ---
+const getPageFromURL = () => {
+  const params = new URLSearchParams(window.location.search);
+  const page = parseInt(params.get('page') || '1', 10);
+  return isNaN(page) ? 1 : page;
+};
+
+// --- Character List Page Component ---
+export default function CharacterListPage({ onCharacterSelect }) {
+  const [currentPage, setCurrentPage] = useState(getPageFromURL());
+  const queryClient = useQueryClient();
+  
+  // --- Column Definitions for the list view ---
 const columns = [
+  columnHelper.display({
+    id: 'serialNumber',
+    header: 'Number',
+    cell: (info) => <span className='text-center'>{(currentPage - 1) * 20 + info.row.index + 1}</span>,
+  }),
   columnHelper.accessor('image', {
     header: () => <span>Image</span>,
     cell: (info) => (
@@ -97,27 +125,6 @@ const columns = [
     cell: (info) => <span>{info.getValue().name}</span>,
   }),
 ];
-
-// --- Data Fetching Functions ---
-const fetchCharacters = async (page: number): Promise<ApiListResponse> => {
-  const response = await fetch(`https://rickandmortyapi.com/api/character/?page=${page}`);
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  return response.json();
-};
-
-// --- Helper to get page from URL ---
-const getPageFromURL = () => {
-  const params = new URLSearchParams(window.location.search);
-  const page = parseInt(params.get('page') || '1', 10);
-  return isNaN(page) ? 1 : page;
-};
-
-// --- Character List Page Component ---
-export default function CharacterListPage({ onCharacterSelect }) {
-  const [currentPage, setCurrentPage] = useState(getPageFromURL());
- const queryClient = useQueryClient();
   // --- Effect to sync URL with state ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
