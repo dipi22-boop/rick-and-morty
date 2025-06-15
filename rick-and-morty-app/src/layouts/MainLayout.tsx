@@ -7,11 +7,11 @@ type MainLayoutProps = {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900">
-      <header className="bg-white shadow p-4">
-        <h1 className="text-2xl font-semibold text-center">Rick And Morty Application</h1>
+    <div>
+      <header className="bg-gray-200 p-4 text-center mb-2">
+        <h1 className="text-4xl font-bold text-indigo-900">The Rick and Morty Universe</h1>
       </header>
-      <main className="p-6">{children}</main>
+      <main className="p-2">{children}</main>
     </div>
   );
 };
