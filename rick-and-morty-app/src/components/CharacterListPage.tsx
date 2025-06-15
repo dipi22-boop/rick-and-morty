@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   useQuery,
+  useQueryClient,
 } from '@tanstack/react-query';
 import {
   createColumnHelper,
@@ -116,7 +117,7 @@ const getPageFromURL = () => {
 // --- Character List Page Component ---
 export default function CharacterListPage({ onCharacterSelect }) {
   const [currentPage, setCurrentPage] = useState(getPageFromURL());
-
+ const queryClient = useQueryClient();
   // --- Effect to sync URL with state ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -137,7 +138,7 @@ export default function CharacterListPage({ onCharacterSelect }) {
     };
   }, []);
 
-  const { isLoading, isError, data, error } = useQuery<ApiListResponse, Error>({
+  const { isLoading, isError, data, error, refetch, isFetching } = useQuery<ApiListResponse, Error>({
     queryKey: ['characters', currentPage],
     queryFn: () => fetchCharacters(currentPage),
     keepPreviousData: true,
@@ -167,6 +168,9 @@ export default function CharacterListPage({ onCharacterSelect }) {
     }
   };
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['characters', currentPage] });
+  };
   return (
     <div className="p-4">
       {isLoading && (
@@ -210,10 +214,22 @@ export default function CharacterListPage({ onCharacterSelect }) {
         <div className="flex items-center justify-between mt-8 flex-wrap gap-4">
           <span className="text-gray-400">Page <strong>{currentPage} of {pageInfo?.pages}</strong></span>
           <div className="flex items-center gap-2">
-            <button onClick={goToPreviousPage} disabled={!pageInfo?.prev} className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cyan-500 transition-colors duration-200">
+            <button
+              onClick={handleRefresh}
+              disabled={isFetching}
+              className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cyan-500 transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`h-5 w-5 ${isFetching ? 'animate-spin' : ''}`}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0 0h-4.992" />
+              </svg>
+              <span>
+                {isFetching ? 'Refreshing...' : 'Refresh'}
+              </span>
+            </button>
+            <button onClick={goToPreviousPage} disabled={!pageInfo?.prev || isFetching} className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cyan-500 transition-colors duration-200">
               Previous
             </button>
-            <button onClick={goToNextPage} disabled={!pageInfo?.next} className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cyan-500 transition-colors duration-200">
+            <button onClick={goToNextPage} disabled={!pageInfo?.next || isFetching} className="px-4 py-2 bg-gray-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cyan-500 transition-colors duration-200">
               Next
             </button>
           </div>
