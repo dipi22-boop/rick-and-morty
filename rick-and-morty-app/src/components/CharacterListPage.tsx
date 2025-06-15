@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   useQuery,
 } from '@tanstack/react-query';
@@ -24,8 +24,8 @@ interface Origin {
 }
 
 interface Location {
-    name: string;
-    url: string;
+  name: string;
+  url: string;
 }
 
 interface Character {
@@ -77,8 +77,8 @@ const columns = [
       const status = info.getValue();
       const statusColor =
         status === 'Alive' ? 'bg-green-500' :
-        status === 'Dead' ? 'bg-red-500' :
-        'bg-gray-500';
+          status === 'Dead' ? 'bg-red-500' :
+            'bg-gray-500';
       return (
         <span className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${statusColor}`}></span>
@@ -106,10 +106,36 @@ const fetchCharacters = async (page: number): Promise<ApiListResponse> => {
   return response.json();
 };
 
+// --- Helper to get page from URL ---
+const getPageFromURL = () => {
+  const params = new URLSearchParams(window.location.search);
+  const page = parseInt(params.get('page') || '1', 10);
+  return isNaN(page) ? 1 : page;
+};
 
 // --- Character List Page Component ---
 export default function CharacterListPage({ onCharacterSelect }) {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(getPageFromURL());
+
+  // --- Effect to sync URL with state ---
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('page', currentPage.toString());
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    // Use replaceState to avoid cluttering browser history for simple pagination
+    window.history.replaceState({ path: newUrl }, '', newUrl);
+  }, [currentPage]);
+
+  // --- Effect to handle browser back/forward buttons ---
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPage(getPageFromURL());
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   const { isLoading, isError, data, error } = useQuery<ApiListResponse, Error>({
     queryKey: ['characters', currentPage],
